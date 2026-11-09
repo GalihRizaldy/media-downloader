@@ -12,16 +12,18 @@ body {
   color: #ffffff;
   background-color: #d81b60;
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle geometric pattern overlay */
+/* Subtle optimized geometric background pattern */
 .bg-geometric-pattern {
   background-color: #d81b60;
   background-image: 
-    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.06) 0%, transparent 20%),
-    radial-gradient(circle at 50% 80%, rgba(0, 0, 0, 0.12) 0%, transparent 35%),
-    linear-gradient(135deg, rgba(233, 30, 99, 0.95) 0%, rgba(216, 27, 96, 1) 50%, rgba(194, 24, 91, 1) 100%);
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
+    radial-gradient(circle at 85% 25%, rgba(255, 255, 255, 0.06) 0%, transparent 30%),
+    radial-gradient(circle at 50% 85%, rgba(0, 0, 0, 0.12) 0%, transparent 40%),
+    linear-gradient(135deg, #e91e63 0%, #d81b60 50%, #c2185b 100%);
   background-attachment: fixed;
 }
 
@@ -29,11 +31,28 @@ body {
 .bg-grid-subtle {
   background-size: 32px 32px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
 }
 
 /* Custom Cursive Font class */
 .font-cursive {
   font-family: var(--font-pacifico), "Brush Script MT", cursive;
+}
+
+/* Smooth Hardware-Accelerated Fade In */
+@keyframes smoothFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-smooth-in {
+  animation: smoothFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }

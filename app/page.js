@@ -40,7 +40,7 @@ export default function HomePage() {
   const handleSubmit = async (e) => {
     e?.preventDefault();
 
-    // 1. Keamanan: Cek Honeypot (jika terisi, abaikan karena itu bot)
+    // 1. Keamanan: Cek Honeypot (jika terisi, abaikan karena bot)
     if (honeypot) {
       console.warn('Bot form otomatis terdeteksi.');
       return;
@@ -134,21 +134,39 @@ export default function HomePage() {
     }
   };
 
+  // Fungsi bersihkan (clear) input
+  const handleClear = () => {
+    setUrl('');
+    setError(null);
+  };
+
   // Helper untuk membuat link unduhan melalui API Proxy (Force Download)
   const getDownloadProxyUrl = (targetUrl, filename) => {
     if (!targetUrl) return '#';
     return `/api/file?url=${encodeURIComponent(targetUrl)}&filename=${encodeURIComponent(filename)}`;
   };
 
-  // Nama file yang ramah sistem operasi
-  const safeTitle = (videoData?.title || 'media-download')
-    .slice(0, 30)
-    .replace(/[/\\?%*:|"<>#]/g, '')
-    .trim() || 'video';
+  // ========================================================
+  // PENAMAAN FILE DI AMBIL LANGSUNG DARI TITLE SUMBER ASLI
+  // ========================================================
+  const mediaRawTitle =
+    videoData?.filename ||
+    videoData?.title ||
+    videoData?.caption ||
+    'media-download';
 
-  const filenameMp4 = `${safeTitle}.mp4`;
-  const filenameHdHd = `${safeTitle}-HD.mp4`;
-  const filenameMp3 = `${safeTitle}.mp3`;
+  // Bersihkan karakter ilegal filesystem OS dan ekstensi ganda
+  const cleanMediaTitle = mediaRawTitle
+    .replace(/\.(mp4|mp3|webm|m4a)$/i, '')
+    .replace(/[/\\?%*:|"<>#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim() || 'media-download';
+
+  // Batasi panjang wajar (maks 120 char) agar kompatibel di Windows, Android, dan iOS
+  const sourceTitle = cleanMediaTitle.slice(0, 120);
+
+  const downloadFilenameMp4 = `${sourceTitle}.mp4`;
+  const downloadFilenameMp3 = `${sourceTitle}.mp3`;
 
   // Handler untuk mengunduh format YouTube on-demand (misal: 720p atau MP3 audio)
   const handleYoutubeFormatDownload = async (format) => {
@@ -178,7 +196,7 @@ export default function HomePage() {
 
       const downloadUrl = result.data?.downloads?.mp4 || result.data?.downloads?.mp3;
       if (downloadUrl) {
-        const targetFilename = format === 'audio' ? `${safeTitle}.mp3` : `${safeTitle}-${format}.mp4`;
+        const targetFilename = format === 'audio' ? downloadFilenameMp3 : downloadFilenameMp4;
         const proxyUrl = getDownloadProxyUrl(downloadUrl, targetFilename);
 
         // Update state cache agar tidak perlu fetch ulang jika diklik lagi
@@ -201,15 +219,15 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-geometric-pattern bg-grid-subtle flex flex-col justify-between overflow-x-hidden">
-      {/* Aksen Geometri Dekoratif Samar Responsif */}
+      {/* Aksen Geometri Dekoratif Samar Ringan (Performa Halus) */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-80 md:w-96 h-80 md:h-96 rounded-full bg-white/10 blur-3xl transform -rotate-12"></div>
-        <div className="absolute top-1/4 -right-28 w-96 md:w-[32rem] h-96 md:h-[32rem] rotate-45 bg-pink-400/10 rounded-3xl blur-2xl"></div>
-        <div className="absolute -bottom-32 left-1/3 w-80 md:w-[28rem] h-80 md:h-[28rem] rounded-full bg-purple-500/15 blur-3xl"></div>
+        <div className="absolute -top-24 -left-24 w-72 md:w-96 h-72 md:h-96 rounded-full bg-white/10 blur-2xl transform -rotate-12"></div>
+        <div className="absolute top-1/4 -right-24 w-80 md:w-[28rem] h-80 md:h-[28rem] rotate-45 bg-pink-400/10 rounded-3xl blur-xl"></div>
+        <div className="absolute -bottom-28 left-1/3 w-72 md:w-96 h-72 md:h-96 rounded-full bg-purple-500/15 blur-2xl"></div>
       </div>
 
       {/* ======================================================== */}
-      {/* HEADER / TOP BAR (RESPONSIF MOBILE & DESKTOP)            */}
+      {/* HEADER / TOP BAR                                         */}
       {/* ======================================================== */}
       <header className="relative z-30 w-full border-b border-white/15 bg-black/20 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
@@ -219,29 +237,29 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-white/80 active:scale-95 transition-transform"
+              className="md:hidden p-2 text-white hover:text-white/80 active:scale-95 transition-transform duration-150"
               aria-label="Toggle Menu"
             >
               <i className={`fa-solid ${isMenuOpen ? 'fa-xmark' : 'fa-bars'} text-2xl`}></i>
             </button>
 
-            {/* Logo Teks Cursive */}
+            {/* Logo Teks Cursive: Media Downloader */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={handleReset}>
-              <span className="font-cursive text-2xl sm:text-3xl md:text-3xl lg:text-4xl text-white tracking-wide drop-shadow-md hover:scale-[1.02] transition-transform">
-                MusicallyDown
+              <span className="font-cursive text-2xl sm:text-3xl md:text-3xl lg:text-4xl text-white tracking-wide drop-shadow-md hover:scale-[1.01] transition-transform duration-150">
+                Media Downloader
               </span>
             </div>
           </div>
 
           {/* Sisi Tengah: Menu Navigasi Horizontal (Khusus Desktop: hidden md:flex) */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
             <button
               type="button"
               onClick={() => {
                 setUrl('https://www.tiktok.com/@505_playlist/video/7663771923943263508');
                 setVideoData(null);
               }}
-              className="px-3.5 py-2 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 active:scale-95 transition-all flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 flex items-center gap-2"
             >
               <i className="fa-brands fa-tiktok text-pink-300"></i>
               <span>TikTok</span>
@@ -253,7 +271,7 @@ export default function HomePage() {
                 setUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
                 setVideoData(null);
               }}
-              className="px-3.5 py-2 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 active:scale-95 transition-all flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 flex items-center gap-2"
             >
               <i className="fa-brands fa-youtube text-red-300"></i>
               <span>YouTube</span>
@@ -265,33 +283,21 @@ export default function HomePage() {
                 setUrl('https://www.instagram.com/reels/');
                 setVideoData(null);
               }}
-              className="px-3.5 py-2 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 active:scale-95 transition-all flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150 flex items-center gap-2"
             >
               <i className="fa-brands fa-instagram text-rose-300"></i>
               <span>Instagram</span>
             </button>
           </nav>
 
-          {/* Sisi Kanan: Tombol Aksi Cepat */}
+          {/* Sisi Kanan: Tombol Info (Tombol Paste Desktop telah dihilangkan) */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Tombol Tempel Cepat di Desktop */}
-            <button
-              type="button"
-              onClick={handlePaste}
-              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-xs font-semibold text-white border border-white/20 transition-all shadow-sm"
-              title="Tempel link dari clipboard"
-            >
-              <i className="fa-regular fa-paste"></i>
-              <span>Paste URL</span>
-            </button>
-
-            {/* Tombol Info */}
             <button
               type="button"
               onClick={() =>
-                alert('MusicallyDown v2.0\nDilengkapi perlindungan Anti-CSRF, Origin Validation, dan Force-Download Proxy.')
+                alert('Media Downloader v2.0\nUnduh video TikTok, YouTube, dan Instagram dengan cepat tanpa watermark.')
               }
-              className="p-2 text-white/80 hover:text-white active:scale-95 transition-all"
+              className="p-2 text-white/80 hover:text-white active:scale-95 transition-all duration-150"
               aria-label="Information"
             >
               <i className="fa-regular fa-circle-question text-xl"></i>
@@ -301,7 +307,7 @@ export default function HomePage() {
 
         {/* Dropdown Menu Khusus Mobile saat Hamburger Diklik */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-white/15 bg-black/85 backdrop-blur-lg px-4 py-3 flex flex-col gap-1 shadow-2xl animate-fadeIn">
+          <div className="md:hidden border-t border-white/15 bg-black/85 backdrop-blur-lg px-4 py-3 flex flex-col gap-1 shadow-2xl animate-smooth-in">
             <button
               type="button"
               onClick={() => {
@@ -309,7 +315,7 @@ export default function HomePage() {
                 setIsMenuOpen(false);
                 setVideoData(null);
               }}
-              className="w-full text-left py-2.5 px-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm font-medium flex items-center gap-3 transition"
+              className="w-full text-left py-2.5 px-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors duration-150"
             >
               <i className="fa-brands fa-tiktok text-base w-5 text-pink-300"></i>
               <span>TikTok Downloader</span>
@@ -322,7 +328,7 @@ export default function HomePage() {
                 setIsMenuOpen(false);
                 setVideoData(null);
               }}
-              className="w-full text-left py-2.5 px-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm font-medium flex items-center gap-3 transition"
+              className="w-full text-left py-2.5 px-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors duration-150"
             >
               <i className="fa-brands fa-youtube text-base w-5 text-red-300"></i>
               <span>YouTube Downloader</span>
@@ -335,7 +341,7 @@ export default function HomePage() {
                 setIsMenuOpen(false);
                 setVideoData(null);
               }}
-              className="w-full text-left py-2.5 px-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm font-medium flex items-center gap-3 transition"
+              className="w-full text-left py-2.5 px-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors duration-150"
             >
               <i className="fa-brands fa-instagram text-base w-5 text-rose-300"></i>
               <span>Instagram Downloader</span>
@@ -345,14 +351,14 @@ export default function HomePage() {
       </header>
 
       {/* ======================================================== */}
-      {/* KONTEN UTAMA (RESPONSIF MOBILE & DESKTOP)                */}
+      {/* KONTEN UTAMA                                             */}
       {/* ======================================================== */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full max-w-6xl mx-auto">
         {/* ======================================================== */}
         {/* VIEW 1: FORM INPUT UTAMA                                 */}
         {/* ======================================================== */}
         {!videoData ? (
-          <div className="w-full flex flex-col items-center text-center">
+          <div className="w-full flex flex-col items-center text-center animate-smooth-in">
             {/* Tagline Cursive Hero */}
             <h1 className="font-cursive text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white mb-2 md:mb-3 drop-shadow-lg">
               Media Downloader
@@ -362,7 +368,7 @@ export default function HomePage() {
             </p>
 
             {/* Kotak Card Form Utama */}
-            <div className="w-full max-w-md sm:max-w-xl md:max-w-2xl bg-black/45 backdrop-blur-md rounded-2xl md:rounded-3xl p-5 sm:p-7 md:p-8 border border-white/20 shadow-2xl">
+            <div className="w-full max-w-md sm:max-w-xl md:max-w-2xl bg-black/45 backdrop-blur-md rounded-2xl md:rounded-3xl p-5 sm:p-7 md:p-8 border border-white/20 shadow-2xl transition-all duration-200">
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 {/* 1. Keamanan: Honeypot Anti-Bot (Tersembunyi bagi manusia, bot akan mengisinya) */}
                 <input
@@ -376,9 +382,9 @@ export default function HomePage() {
                   aria-hidden="true"
                 />
 
-                {/* Input Field dengan Dynamic Obfuscated Name (_BDu seperti MusicallyDown) */}
+                {/* Input Field dengan Logika Dinamis Tombol Paste / Clear */}
                 <div className="relative flex items-center">
-                  <div className="absolute left-4 text-gray-400">
+                  <div className="absolute left-4 text-gray-400 pointer-events-none">
                     <i className="fa-solid fa-link text-base md:text-lg"></i>
                   </div>
                   <input
@@ -388,23 +394,37 @@ export default function HomePage() {
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="Tempel link video TikTok, YouTube, atau Instagram..."
                     disabled={loading}
-                    className="w-full pl-11 pr-20 md:pr-24 py-3.5 md:py-4 bg-white text-gray-800 placeholder-gray-400 rounded-xl md:rounded-2xl text-sm md:text-base font-medium focus:outline-none focus:ring-4 focus:ring-pink-300 shadow-inner disabled:opacity-75 transition"
+                    className="w-full pl-11 pr-24 md:pr-28 py-3.5 md:py-4 bg-white text-gray-800 placeholder-gray-400 rounded-xl md:rounded-2xl text-sm md:text-base font-medium focus:outline-none focus:ring-4 focus:ring-pink-300 shadow-inner disabled:opacity-75 transition-all duration-150"
                   />
-                  {/* Tombol Paste di dalam input */}
-                  <button
-                    type="button"
-                    onClick={handlePaste}
-                    disabled={loading}
-                    className="absolute right-2.5 px-2.5 md:px-3 py-1.5 md:py-2 bg-gray-100 hover:bg-gray-200 active:scale-95 text-xs md:text-sm font-semibold text-gray-700 rounded-lg md:rounded-xl flex items-center gap-1.5 border border-gray-300 transition"
-                  >
-                    <i className="fa-regular fa-paste"></i>
-                    <span>Paste</span>
-                  </button>
+
+                  {/* LOGIKA TOMBOL: JIKA KOSONG MUNCUL PASTE, JIKA TERISI MUNCUL CLEAR */}
+                  {url ? (
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="absolute right-2.5 px-3 py-1.5 md:py-2 bg-gray-100 hover:bg-gray-200 active:scale-95 text-xs md:text-sm font-semibold text-gray-700 rounded-lg md:rounded-xl flex items-center gap-1.5 border border-gray-300 transition-all duration-150 shadow-sm"
+                      title="Hapus teks URL"
+                    >
+                      <i className="fa-solid fa-xmark text-sm text-gray-500"></i>
+                      <span>Clear</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handlePaste}
+                      disabled={loading}
+                      className="absolute right-2.5 px-3 py-1.5 md:py-2 bg-gray-100 hover:bg-gray-200 active:scale-95 text-xs md:text-sm font-semibold text-gray-700 rounded-lg md:rounded-xl flex items-center gap-1.5 border border-gray-300 transition-all duration-150 shadow-sm"
+                      title="Tempel link dari clipboard"
+                    >
+                      <i className="fa-regular fa-paste text-gray-500"></i>
+                      <span>Paste</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Pesan Kesalahan jika ada */}
                 {error && (
-                  <div className="bg-rose-950/80 border border-rose-400 text-rose-100 text-xs md:text-sm text-left px-4 py-3 rounded-xl flex items-center gap-2.5">
+                  <div className="bg-rose-950/80 border border-rose-400 text-rose-100 text-xs md:text-sm text-left px-4 py-3 rounded-xl flex items-center gap-2.5 animate-smooth-in">
                     <i className="fa-solid fa-circle-exclamation text-rose-300 text-base shrink-0"></i>
                     <span>{error}</span>
                   </div>
@@ -414,7 +434,7 @@ export default function HomePage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 md:py-4 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-base md:text-lg tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-75 disabled:cursor-not-allowed hover:shadow-orange-500/20"
+                  className="w-full py-3.5 md:py-4 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-base md:text-lg tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2.5 disabled:opacity-75 disabled:cursor-not-allowed hover:shadow-orange-500/20"
                 >
                   {loading ? (
                     <>
@@ -433,61 +453,22 @@ export default function HomePage() {
 
             {/* Platform Badges */}
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 md:mt-8 text-white/80 text-xs sm:text-sm font-medium">
-              <span className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <span className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-white/10 shadow-sm">
                 <i className="fa-brands fa-tiktok text-sm"></i> TikTok
               </span>
-              <span className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <span className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-white/10 shadow-sm">
                 <i className="fa-brands fa-youtube text-sm text-red-300"></i> YouTube
               </span>
-              <span className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <span className="flex items-center gap-2 bg-black/20 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-white/10 shadow-sm">
                 <i className="fa-brands fa-instagram text-sm text-pink-300"></i> Instagram
               </span>
-            </div>
-
-            {/* Fitur Tambahan */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-12 w-full max-w-4xl text-left">
-              <div className="bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/10 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-pink-500/30 flex items-center justify-center shrink-0 text-pink-200">
-                  <i className="fa-solid fa-shield-halved text-lg"></i>
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm md:text-base">Anti-Leech Protected</h3>
-                  <p className="text-xs md:text-sm text-pink-100/80 mt-1">
-                    Dilindungi Anti-CSRF token dan validasi Origin untuk keamanan ekstra.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/10 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/30 flex items-center justify-center shrink-0 text-orange-200">
-                  <i className="fa-solid fa-file-video text-lg"></i>
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm md:text-base">YouTube 1080p & MP3</h3>
-                  <p className="text-xs md:text-sm text-pink-100/80 mt-1">
-                    Mendukung unduhan YouTube resolusi tinggi (1080p/720p) serta format MP3.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/10 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/30 flex items-center justify-center shrink-0 text-purple-200">
-                  <i className="fa-solid fa-bolt text-lg"></i>
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm md:text-base">Cepat & 100% Gratis</h3>
-                  <p className="text-xs md:text-sm text-pink-100/80 mt-1">
-                    Unduh langsung tanpa perlu instalasi aplikasi tambahan atau registrasi.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         ) : (
           /* ======================================================== */
           /* VIEW 2: HASIL DETAIL VIDEO & TOMBOL DOWNLOAD             */
           /* ======================================================== */
-          <div className="w-full max-w-md md:max-w-4xl mx-auto">
+          <div className="w-full max-w-md md:max-w-4xl mx-auto animate-smooth-in">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start">
               {/* ==================================================== */}
               {/* KOLOM KIRI (Desktop: 5 cols): SECTION DETAIL VIDEO    */}
@@ -585,11 +566,11 @@ export default function HomePage() {
                   {/* --- JIKA INI KONTEN YOUTUBE --- */}
                   {videoData.type === 'youtube' ? (
                     <>
-                      {/* Tombol DOWNLOAD MP4 [1080p] */}
+                      {/* Tombol DOWNLOAD MP4 [1080p] Mengikuti Title Sumber Asli */}
                       <a
-                        href={getDownloadProxyUrl(videoData.downloads?.mp4_hd, `${safeTitle}-1080p.mp4`)}
-                        download={`${safeTitle}-1080p.mp4`}
-                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
+                        href={getDownloadProxyUrl(videoData.downloads?.mp4_hd, downloadFilenameMp4)}
+                        download={downloadFilenameMp4}
+                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
                       >
                         <i className="fa-solid fa-film text-base md:text-lg"></i>
                         <span>DOWNLOAD MP4 [1080p HD]</span>
@@ -600,7 +581,7 @@ export default function HomePage() {
                         type="button"
                         onClick={() => handleYoutubeFormatDownload('720p')}
                         disabled={formatLoading === '720p'}
-                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20 disabled:opacity-75"
+                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20 disabled:opacity-75"
                       >
                         {formatLoading === '720p' ? (
                           <>
@@ -620,7 +601,7 @@ export default function HomePage() {
                         type="button"
                         onClick={() => handleYoutubeFormatDownload('audio')}
                         disabled={formatLoading === 'audio'}
-                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20 disabled:opacity-75"
+                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20 disabled:opacity-75"
                       >
                         {formatLoading === 'audio' ? (
                           <>
@@ -638,35 +619,35 @@ export default function HomePage() {
                   ) : (
                     /* --- JIKA INI KONTEN TIKTOK / INSTAGRAM --- */
                     <>
-                      {/* Tombol DOWNLOAD MP4 */}
+                      {/* Tombol DOWNLOAD MP4 Mengikuti Title Sumber Asli */}
                       <a
-                        href={getDownloadProxyUrl(videoData.downloads?.mp4, filenameMp4)}
-                        download={filenameMp4}
-                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
+                        href={getDownloadProxyUrl(videoData.downloads?.mp4, downloadFilenameMp4)}
+                        download={downloadFilenameMp4}
+                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
                       >
                         <i className="fa-solid fa-video text-base md:text-lg"></i>
                         <span>DOWNLOAD MP4</span>
                       </a>
 
-                      {/* Tombol DOWNLOAD MP4 [HD] */}
+                      {/* Tombol DOWNLOAD MP4 [HD] Mengikuti Title Sumber Asli */}
                       <a
                         href={getDownloadProxyUrl(
                           videoData.downloads?.mp4_hd || videoData.downloads?.mp4,
-                          filenameHdHd
+                          downloadFilenameMp4
                         )}
-                        download={filenameHdHd}
-                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
+                        download={downloadFilenameMp4}
+                        className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
                       >
                         <i className="fa-solid fa-film text-base md:text-lg"></i>
                         <span>DOWNLOAD MP4 [HD]</span>
                       </a>
 
-                      {/* Tombol DOWNLOAD MP3 (Jika audio tersedia) */}
+                      {/* Tombol DOWNLOAD MP3 (Jika audio tersedia) Mengikuti Title Sumber Asli */}
                       {videoData.downloads?.mp3 && (
                         <a
-                          href={getDownloadProxyUrl(videoData.downloads.mp3, filenameMp3)}
-                          download={filenameMp3}
-                          className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
+                          href={getDownloadProxyUrl(videoData.downloads.mp3, downloadFilenameMp3)}
+                          download={downloadFilenameMp3}
+                          className="w-full py-4 px-5 bg-[#ff5722] hover:bg-[#f4511e] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 text-center flex items-center justify-center gap-2.5 hover:shadow-orange-500/20"
                         >
                           <i className="fa-solid fa-music text-base md:text-lg"></i>
                           <span>DOWNLOAD MP3</span>
@@ -679,7 +660,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="w-full mt-2 py-4 px-5 bg-[#212529] hover:bg-[#1a1e21] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 border border-white/15"
+                    className="w-full mt-2 py-4 px-5 bg-[#212529] hover:bg-[#1a1e21] active:scale-[0.98] text-white font-bold text-sm md:text-base tracking-wide rounded-xl md:rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-2.5 border border-white/15"
                   >
                     <i className="fa-solid fa-arrow-left text-base md:text-lg"></i>
                     <span>DOWNLOAD VIDEO LAIN</span>
@@ -696,13 +677,13 @@ export default function HomePage() {
       {/* ======================================================== */}
       <footer className="relative z-10 w-full border-t border-white/10 bg-black/20 backdrop-blur-sm py-5 text-center text-xs text-white/70">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} MusicallyDown Media Downloader. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Media Downloader. All rights reserved.</p>
           <div className="flex items-center gap-4 text-white/80">
-            <span className="hover:text-white cursor-pointer transition">Ketentuan Layanan</span>
+            <span className="hover:text-white cursor-pointer transition-colors duration-150">Ketentuan Layanan</span>
             <span>•</span>
-            <span className="hover:text-white cursor-pointer transition">Kebijakan Privasi</span>
+            <span className="hover:text-white cursor-pointer transition-colors duration-150">Kebijakan Privasi</span>
             <span>•</span>
-            <span className="hover:text-white cursor-pointer transition">Kontak</span>
+            <span className="hover:text-white cursor-pointer transition-colors duration-150">Kontak</span>
           </div>
         </div>
       </footer>

@@ -1,6 +1,6 @@
-# MusicallyDown - Media Downloader (TikTok, YouTube, Instagram)
+# Media Downloader (TikTok, YouTube, Instagram)
 
-Aplikasi web pengunduh media yang dirancang dengan Next.js App Router, Tailwind CSS, Font Awesome, dan terintegrasi dengan RapidAPI. Tampilan mengadopsi tema khas MusicallyDown dengan dominan warna pink/magenta, aksen geometri samar, font *cursive*, kartu detail video transparan, dan tombol aksi berwarna oranye menyala.
+Aplikasi web pengunduh media yang dirancang dengan Next.js App Router, Tailwind CSS, Font Awesome, dan terintegrasi dengan RapidAPI. Tampilan mengadopsi tema dominan warna pink/magenta, aksen geometri samar, font *cursive*, kartu detail video transparan, dan tombol aksi berwarna oranye menyala.
 
 ---
 
